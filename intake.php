@@ -8,7 +8,7 @@ session_start();
 const DB_PATH       = __DIR__ . '/repairs.sqlite';   // SQLite file location
 const TICKET_PREFIX = 'LS';                           // ticket number prefix
 const APP_NAME      = 'Repair Tracker';
-const COMPANY       = 'Company name';
+const COMPANY       = 'Lauderdale Speedometer';
 
 $STATUSES   = ['Received', 'Diagnosing', 'Awaiting Parts', 'In Progress', 'Ready for Pickup', 'Completed', 'Cancelled'];
 $PRIORITIES = ['Low', 'Normal', 'High', 'Rush'];
@@ -421,12 +421,26 @@ if ($page === 'logout') { session_destroy(); header('Location: ?page=login'); ex
    ============================================================ */
 function layout_top(string $title): void {
     $u = current_user();
+    $theme = (($_COOKIE['theme'] ?? 'dark') === 'light') ? 'light' : 'dark';
     ?><!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en" data-theme="<?=$theme?>"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?=e($title)?> · <?=e(APP_NAME)?></title>
 <style>
 :root{--bg:#0f1420;--panel:#181f2e;--panel2:#1f2838;--line:#2a3448;--txt:#e6ebf4;--mut:#8b98b0;--acc:#3b82f6;--acc2:#2563eb}
+html[data-theme="light"]{--bg:#f3f5fa;--panel:#ffffff;--panel2:#eef1f7;--line:#d7ddea;--txt:#1a2233;--mut:#5c6a82;--acc:#2563eb;--acc2:#1d4ed8}
+html{color-scheme:dark}html[data-theme="light"]{color-scheme:light}
+/* Status badges: light-mode variants (softer, on-white) */
+html[data-theme="light"] .st-received{background:#e0edff;color:#1d4ed8}
+html[data-theme="light"] .st-diagnosing{background:#fef3c7;color:#92600a}
+html[data-theme="light"] .st-awaitingparts{background:#ffedd5;color:#9a3412}
+html[data-theme="light"] .st-inprogress{background:#dcfce7;color:#166534}
+html[data-theme="light"] .st-readyforpickup{background:#ede9fe;color:#6d28d9}
+html[data-theme="light"] .st-completed{background:#dcfce7;color:#15803d}
+html[data-theme="light"] .st-cancelled{background:#fee2e2;color:#b91c1c}
+html[data-theme="light"] .flash{background:#dcfce7;border-color:#86efac;color:#166534}
+html[data-theme="light"] .err{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
+html[data-theme="light"] .pri-Low{color:#94a3b8}
 *{box-sizing:border-box}
 body{margin:0;font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt)}
 a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
@@ -469,6 +483,9 @@ tr:hover td{background:var(--panel2)}
 .stat{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:18px}
 .stat div{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 18px;min-width:110px}
 .stat .n{font-size:24px;font-weight:700}.stat .l{font-size:12px;color:var(--mut)}
+.theme-btn{cursor:pointer;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.theme-btn:hover{border-color:var(--acc)}
+.theme-fixed{position:fixed;top:14px;right:16px;z-index:10}
 </style></head><body>
 <?php if ($u): ?>
 <header>
@@ -479,10 +496,24 @@ tr:hover td{background:var(--panel2)}
     <a href="?page=new">+ New</a>
     <?php if (is_admin()): ?><a href="?page=users">Users</a><?php endif; ?>
     <a href="?page=account" class="muted"><?=e($u)?></a>
+    <button type="button" class="theme-btn" onclick="toggleTheme()" title="Toggle color theme"><span id="themeLabel"><?= $theme==='dark'?'Light':'Dark' ?></span> mode</button>
     <a href="?page=logout">Log out</a>
   </nav>
 </header>
+<?php else: ?>
+<button type="button" class="theme-btn theme-fixed" onclick="toggleTheme()" title="Toggle color theme"><span id="themeLabel"><?= $theme==='dark'?'Light':'Dark' ?></span> mode</button>
 <?php endif; ?>
+<script>
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  var l=document.getElementById('themeLabel'); if(l) l.textContent = (t==='dark'?'Light':'Dark');
+  document.cookie = 'theme='+t+';path=/;max-age=31536000;samesite=lax';
+}
+function toggleTheme(){
+  var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(cur==='dark' ? 'light' : 'dark');
+}
+</script>
 <div class="wrap"><?php
 }
 function layout_bottom(): void { echo '</div></body></html>'; }
